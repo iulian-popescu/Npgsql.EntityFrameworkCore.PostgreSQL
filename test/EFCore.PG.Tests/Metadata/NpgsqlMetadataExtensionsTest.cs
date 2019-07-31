@@ -1,8 +1,6 @@
-using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.TestUtilities;
 using Xunit;
 
@@ -231,7 +229,8 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata
             var modelBuilder = GetModelBuilder();
             var model = modelBuilder.Model;
 
-            Assert.Equal(NpgsqlValueGenerationStrategy.SerialColumn, model.GetNpgsqlValueGenerationStrategy());
+            // TODO for PG9.6 testing: make this conditional
+            Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn, model.GetNpgsqlValueGenerationStrategy());
 
             model.SetNpgsqlValueGenerationStrategy(NpgsqlValueGenerationStrategy.SequenceHiLo);
 
@@ -309,7 +308,8 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata
                 .Property(e => e.NullableInt).ValueGeneratedOnAdd()
                 .Metadata;
 
-            Assert.Equal(NpgsqlValueGenerationStrategy.SerialColumn, property.GetNpgsqlValueGenerationStrategy());
+            // TODO for PG9.6 testing: make this conditional
+            Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn, property.GetNpgsqlValueGenerationStrategy());
 
             property.SetNpgsqlValueGenerationStrategy(NpgsqlValueGenerationStrategy.SequenceHiLo);
 
@@ -317,7 +317,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata
 
             property.SetNpgsqlValueGenerationStrategy(null);
 
-            Assert.Equal(NpgsqlValueGenerationStrategy.SerialColumn, property.GetNpgsqlValueGenerationStrategy());
+            Assert.Equal(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn, property.GetNpgsqlValueGenerationStrategy());
         }
 
         [ConditionalFact]
@@ -381,6 +381,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Metadata
 
             Assert.Null(property.FindNpgsqlHiLoSequence());
 
+            // TODO for PG9.6 testing: make this conditional
             modelBuilder.Model.SetNpgsqlValueGenerationStrategy(NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
             Assert.Null(property.FindNpgsqlHiLoSequence());

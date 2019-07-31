@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Utilities;
@@ -13,8 +15,16 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Design.Internal
 {
     public class NpgsqlAnnotationCodeGenerator : AnnotationCodeGenerator
     {
-        public NpgsqlAnnotationCodeGenerator([NotNull] AnnotationCodeGeneratorDependencies dependencies)
-            : base(dependencies) {}
+        [CanBeNull] readonly Version _postgresVersion;
+
+        public NpgsqlAnnotationCodeGenerator(
+            [NotNull] AnnotationCodeGeneratorDependencies dependencies,
+            [NotNull] IDbContextOptions options)
+            : base(dependencies)
+        {
+            var optionsExtension = options.Extensions.OfType<NpgsqlOptionsExtension>().FirstOrDefault();
+            _postgresVersion = optionsExtension?.PostgresVersion;
+        }
 
         public override bool IsHandledByConvention(IModel model, IAnnotation annotation)
         {
@@ -49,14 +59,16 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Design.Internal
             Check.NotNull(property, nameof(property));
             Check.NotNull(annotation, nameof(annotation));
 
-            // Serial is the default value generation strategy.
-            // So if ValueGenerated is OnAdd (which it must be if serial is set), make sure
-            // ValueGenerationStrategy.Serial isn't code-generated because it's by-convention.
-            if (annotation.Name == NpgsqlAnnotationNames.ValueGenerationStrategy
-                && (NpgsqlValueGenerationStrategy)annotation.Value == NpgsqlValueGenerationStrategy.SerialColumn)
+            // The default by-convention value generation strategy is serial in pre-10 PostgreSQL,
+            // and IdentityByDefault otherwise.
+            if (annotation.Name == NpgsqlAnnotationNames.ValueGenerationStrategy)
             {
                 Debug.Assert(property.ValueGenerated == ValueGenerated.OnAdd);
-                return true;
+                var strategy = (NpgsqlValueGenerationStrategy)annotation.Value;
+
+                return PostgresVersionAtLeast(10, 0)
+                    ? strategy == NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
+                    : strategy == NpgsqlValueGenerationStrategy.SerialColumn;
             }
 
             return false;
@@ -174,5 +186,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Design.Internal
 
             return null;
         }
+
+        bool PostgresVersionAtLeast(int major, int minor) => _postgresVersion is null || new Version(major, minor) <= _postgresVersion;
     }
 }
