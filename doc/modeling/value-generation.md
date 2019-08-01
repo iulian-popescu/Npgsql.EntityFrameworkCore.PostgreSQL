@@ -10,7 +10,7 @@
 
 ### Introduction
 
-Since PostgreSQL 10, the standard way to define auto-incrementing columns is "identity columns". Prior to version 10, "serial columns" were used, which are less SQL-compliant and generally more difficult to manage. For more information on these, [see this blog post](https://blog.2ndquadrant.com/postgresql-10-identity-columns/).
+Since PostgreSQL 10, the standard way to define auto-incrementing columns is "identity columns". Prior to version 10, "serial columns" were used, which are less SQL-compliant and generally more difficult to manage. For more information on these, [see this blog post](https://blog.2ndquadrant.com/postgresql-10-identity-columns/). Note that since PostgreSQL 10, both support `smallint`, `integer` and `bigint` as their data type.
 
 The Npgsql EF Core provider allows you to choose which of the above you want on a property-by-property basis, or globally on your model. The following "value generation strategies" are available:
 
@@ -35,9 +35,7 @@ Note that if you are using PostgreSQL 9.6 or older, identity columns will not wo
 
 ```c#
 protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-{
-    optionsBuilder.UseNpgsql("...", o => o.SetPostgresVersion(9, 6));
-}
+    => optionsBuilder.UseNpgsql("...", o => o.SetPostgresVersion(9, 6));
 ```
 
 ## Standard sequence-driven columns

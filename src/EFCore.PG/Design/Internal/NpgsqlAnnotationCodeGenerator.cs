@@ -21,10 +21,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Design.Internal
             [NotNull] AnnotationCodeGeneratorDependencies dependencies,
             [NotNull] IDbContextOptions options)
             : base(dependencies)
-        {
-            var optionsExtension = options.Extensions.OfType<NpgsqlOptionsExtension>().FirstOrDefault();
-            _postgresVersion = optionsExtension?.PostgresVersion;
-        }
+            => _postgresVersion = options.Extensions.OfType<NpgsqlOptionsExtension>().FirstOrDefault()?.PostgresVersion;
 
         public override bool IsHandledByConvention(IModel model, IAnnotation annotation)
         {
@@ -66,7 +63,7 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Design.Internal
                 Debug.Assert(property.ValueGenerated == ValueGenerated.OnAdd);
                 var strategy = (NpgsqlValueGenerationStrategy)annotation.Value;
 
-                return PostgresVersionAtLeast(10, 0)
+                return _postgresVersion.AtLeast(10, 0)
                     ? strategy == NpgsqlValueGenerationStrategy.IdentityByDefaultColumn
                     : strategy == NpgsqlValueGenerationStrategy.SerialColumn;
             }
@@ -186,7 +183,5 @@ namespace Npgsql.EntityFrameworkCore.PostgreSQL.Design.Internal
 
             return null;
         }
-
-        bool PostgresVersionAtLeast(int major, int minor) => _postgresVersion is null || new Version(major, minor) <= _postgresVersion;
     }
 }

@@ -5,7 +5,7 @@
 ## [2.0](release-notes/2.0.md)
 ## [1.1](release-notes/1.1.md)
 # Creating a Model
-## [Generated Properties](generated-properties.md)
+## [Generated Properties](modeling/generated-properties.md)
 ## [Indexes](modeling/indexes.md)
 # Mapping and Translation
 ## [General](mapping/general.md)
